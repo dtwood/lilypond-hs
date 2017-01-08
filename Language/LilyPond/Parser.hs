@@ -1,8 +1,8 @@
 module Language.LilyPond.Parser (lilyPondParser) where
-  import Text.Parsec
   import Data.Char
   import Data.Functor.Identity
   import Language.LilyPond.Types
+  import Text.Parsec
 
   pitchClass = do
     pc <- oneOf "abcdefg"

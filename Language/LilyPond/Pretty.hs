@@ -1,8 +1,7 @@
 module Language.LilyPond.Pretty where
   import Language.LilyPond.Types
+  import Text.Pretty
 
-  class Pretty a where
-    pretty :: a -> String
 
   instance Pretty PitchClass where
     pretty A = "a"
