@@ -1,4 +1,3 @@
-import Data.Either.Unwrap
 import Language.LilyPond.Parser
 import Language.LilyPond.Pretty
 import Language.LilyPond.Types
@@ -13,5 +12,5 @@ main = do
     case result of
       Left error -> print error
       Right success -> do
-        pPrint $ fromRight result
-        print $ fromRight result
+        pPrint success
+        print success
