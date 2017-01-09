@@ -9,6 +9,9 @@ main :: IO ()
 main = do
     let fileName = "clarinet-1.ly"
     file <- readFile fileName
-    let result = fromRight $ Text.Parsec.parse lilyPondParser fileName file
-    pPrint result
-    print result
+    let result = Text.Parsec.parse lilyPondParser fileName file
+    case result of
+      Left error -> print error
+      Right success -> do
+        pPrint $ fromRight result
+        print $ fromRight result
