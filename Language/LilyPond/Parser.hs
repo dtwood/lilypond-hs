@@ -6,7 +6,7 @@ module Language.LilyPond.Parser (lilyPondParser) where
   import Text.Parsec
 
   pitchClass = do
-    pc <- oneOf "abcdefg"
+    pc <- oneOf "abcdefg" <?> "note"
     return $ case pc of
       'a' -> A
       'b' -> B
@@ -16,27 +16,30 @@ module Language.LilyPond.Parser (lilyPondParser) where
       'f' -> F
       'g' -> G
 
-  quotes = option (Quotes 0) quotesHelper
+  quotes = option (Quotes 0) (quoteUpHelper <|> quoteDownHelper)
 
-  quotesHelper = do
-    o <- oneOf "\',"
-    spaces
+  quoteUpHelper = do
+    o <- char '\''
     rest <- quotes
 
-    return $ case (o, rest) of
-      ('\'', Quotes x) -> Quotes (x + 1)
-      (',', Quotes x) -> Quotes (x - 1)
+    return $ case rest of
+      Quotes x -> Quotes (x + 1)
+
+  quoteDownHelper = do
+    o <- char ','
+    rest <- quotes
+
+    return $ case rest of
+      Quotes x -> Quotes (x - 1)
 
   pitch = do
     pc <- pitchClass
-    spaces
     o <- quotes
 
     return $ Pitch pc o
 
   exclamationsHelper = do
     char '!'
-    spaces
     rest <- exclamations
 
     return $ case rest of
@@ -46,7 +49,6 @@ module Language.LilyPond.Parser (lilyPondParser) where
 
   questionsHelper = do
     char '?'
-    spaces
     rest <- questions
 
     return $ case rest of
@@ -57,7 +59,6 @@ module Language.LilyPond.Parser (lilyPondParser) where
   octaveCheckHelper :: ParsecT String u Identity OctaveCheck
   octaveCheckHelper = do
     char '='
-    spaces
     q <- quotes
     return $ OctaveCheck q
 
@@ -82,32 +83,23 @@ module Language.LilyPond.Parser (lilyPondParser) where
 
   pitchOrMusicPitch = do
     p <- pitch
-    spaces
     e <- exclamations
-    spaces
     q <- questions
-    spaces
     oc <- octaveCheck
-    spaces
     mnd <- maybeNotemodeDuration
-    spaces
     or_ <- optionalRest
-    spaces
     pe <- postEvents
     return $ PitchOrMusicPitch p e q oc mnd or_ pe
 
   pitchOrMusicChord = do
     nc <- newChord
-    spaces
     pe <- postEvents
     return $ PitchOrMusicChord nc pe
 
-  pitchOrMusic = choice [pitchOrMusicPitch, pitchOrMusicChord]
+  pitchOrMusic = pitchOrMusicPitch <|> pitchOrMusicChord
 
   lilyPondParser :: ParsecT String () Identity [PitchOrMusic]
   lilyPondParser = do
-    spaces
-    a <- many pitchOrMusic
-    spaces
+    a <- many (pitchOrMusic <* many1 space)
     eof
     return a
